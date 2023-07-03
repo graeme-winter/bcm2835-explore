@@ -19,10 +19,16 @@
 #define GPIO_ALT5 2
 
 static volatile uint32_t *reg = NULL;
+static volatile uint32_t *mem = NULL;
 
 void setup(void) {
   int fd = open("/dev/gpiomem", O_RDWR | O_SYNC);
+  printf("%d\n", fd);
   reg = (uint32_t *)mmap(NULL, 0xB4, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  close(fd);
+  fd = open("/dev/mem", O_RDWR | O_SYNC);
+  printf("%d\n", fd);
+  mem = (uint32_t *)mmap(NULL, 0x1000, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0x20101000);
   close(fd);
 }
 
@@ -35,5 +41,9 @@ void set_mode(int gpio, int mode) {
 int main() {
   setup();
   set_mode(4, GPIO_ALT0);
+  uint32_t pass = 0x5a << 24;
+  uint32_t div = 1000 << 12;
+  mem[0x74/4] = pass | div;
+  mem[0x70/4] = pass | 0x5;
   return 0;
 }
