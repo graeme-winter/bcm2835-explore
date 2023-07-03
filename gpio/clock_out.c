@@ -18,10 +18,12 @@
 #define GPIO_ALT4 3
 #define GPIO_ALT5 2
 
+// GPIO register; GPCLK register
 static volatile uint32_t *reg = NULL;
 static volatile uint32_t *mem = NULL;
 
 void setup(void) {
+  // technically these are redundant since I could use /dev/mem for both
   int fd = open("/dev/gpiomem", O_RDWR | O_SYNC);
   reg = (uint32_t *)mmap(NULL, 0xB4, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   close(fd);
