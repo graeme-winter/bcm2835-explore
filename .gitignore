@@ -1,0 +1,7 @@
+# object
+*.o
+
+# build products
+*.elf
+*.img
+
