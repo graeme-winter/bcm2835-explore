@@ -1,0 +1,1 @@
+int nop(int x) { return 0; }
