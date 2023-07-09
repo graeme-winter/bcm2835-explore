@@ -47,13 +47,13 @@ int main(void) {
   AUX[AUX_MU_IIR_REG] = 0xC6;
   AUX[AUX_MU_BAUD_REG] = 270;
 
-  // GPIO14, GPIO15
+  // GPIO14
   gpio_reg = GPIO[GPFSEL1];
   gpio_reg &= ~(7 << 12);
   gpio_reg |= 2 << 12;
-  gpio_reg &= ~(7 << 15);
-  gpio_reg |= 2 << 15;
   GPIO[GPFSEL1] = gpio_reg;
+
+  AUX[AUX_MU_CNTL_REG] = 2;
 
   // GPIO47
   gpio_reg = GPIO[GPFSEL4];
@@ -64,7 +64,7 @@ int main(void) {
   while (1) {
     // 15 == strlen(message)
     for (int j = 0; j < 15; j++) {
-      while(~(AUX[AUX_MU_LSR_REG] & 1<<5));
+      while(!(AUX[AUX_MU_LSR_REG] & (1<<5)));
       AUX[AUX_MU_IO_REG] = message[j];
     }
     GPIO[GPSET1] = 1 << LED;
