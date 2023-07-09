@@ -16,7 +16,7 @@ volatile unsigned int *GPIO = (unsigned int *)0x20200000;
 #define LED (47 - 32)
 
 // §2.1 of data sheet
-volatile unsigned int * AUX = (unsigned int *) 0x20215000;
+volatile unsigned int *AUX = (unsigned int *)0x20215000;
 #define AUX_ENABLES (0x4 / 4)
 #define AUX_MU_IO_REG (0x40 / 4)
 #define AUX_MU_IER_REG (0x44 / 4)
@@ -64,7 +64,8 @@ int main(void) {
   while (1) {
     // 15 == strlen(message)
     for (int j = 0; j < 15; j++) {
-      while(!(AUX[AUX_MU_LSR_REG] & (1<<5)));
+      while (!(AUX[AUX_MU_LSR_REG] & (1 << 5)))
+        ;
       AUX[AUX_MU_IO_REG] = message[j];
     }
     GPIO[GPSET1] = 1 << LED;
