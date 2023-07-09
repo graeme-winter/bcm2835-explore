@@ -47,10 +47,12 @@ int main(void) {
   AUX[AUX_MU_IIR_REG] = 0xC6;
   AUX[AUX_MU_BAUD_REG] = 270;
 
-  // GPIO14
+  // GPIO14, 15
   gpio_reg = GPIO[GPFSEL1];
   gpio_reg &= ~(7 << 12);
-  gpio_reg |= 2 << 12;
+  gpio_reg |= (2 << 12);
+  gpio_reg &= ~(7 << 15);
+  gpio_reg |= (2 << 15);
   GPIO[GPFSEL1] = gpio_reg;
 
   AUX[AUX_MU_CNTL_REG] = 2;
