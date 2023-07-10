@@ -28,8 +28,8 @@ int main(void) {
   GPIO[GPFSEL0] = gpio_reg;
 
   CM_GP[CM_GP0CTL] = 0;
-  CM_GP[CM_GP0DIV] = GP_PASS | (1920 << 12);
-  CM_GP[CM_GP0CTL] = GP_PASS | 0x10 | 0x1;
+  CM_GP[CM_GP0DIV] = GP_PASS | (1000 << 12);
+  CM_GP[CM_GP0CTL] = GP_PASS | 0x10 | 0x5;
 
   // blinkenlight
   gpio_reg = GPIO[GPFSEL4];
