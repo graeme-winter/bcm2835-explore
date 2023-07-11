@@ -69,9 +69,11 @@ int main(void) {
       AUX[AUX_MU_IO_REG] = message[j];
     }
     GPIO[GPSET1] = 1 << LED;
-    for (int j = 0; j < 0x100000; j++);
+    for (int j = 0; j < 0x100000; j++)
+      ;
     GPIO[GPCLR1] = 1 << LED;
-    for (int j = 0; j < 0x100000; j++);
+    for (int j = 0; j < 0x100000; j++)
+      ;
   }
 
   return 0;
