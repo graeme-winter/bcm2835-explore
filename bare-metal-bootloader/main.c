@@ -51,7 +51,7 @@ int main(void) {
   gpio_reg |= (2 << 15);
   GPIO[GPFSEL1] = gpio_reg;
 
-  AUX[AUX_MU_CNTL_REG] = 2;
+  AUX[AUX_MU_CNTL_REG] = 3;
 
   // GPIO47
   gpio_reg = GPIO[GPFSEL4];
