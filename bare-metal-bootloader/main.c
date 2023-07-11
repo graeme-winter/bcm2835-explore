@@ -33,8 +33,6 @@ volatile unsigned int *AUX = (unsigned int *)0x20215000;
 int main(void) {
   unsigned int gpio_reg;
 
-  const char message[] = "Hello, World!\r\n";
-
   /// set up UART1
   AUX[AUX_ENABLES] = 1;
   AUX[AUX_MU_IER_REG] = 0;
@@ -62,18 +60,33 @@ int main(void) {
   GPIO[GPFSEL4] = gpio_reg;
 
   while (1) {
+    // read 4 bytes
     // 15 == strlen(message)
-    for (int j = 0; j < 15; j++) {
+    unsigned int size = 0, sum = 0;
+    unsigned char * csize = (unsigned char *) &size;
+    unsigned char * csum = (unsigned char *) &sum;
+
+    GPIO[GPSET1] = 1 << LED;
+    for (int j = 0; j < 4; j++) {
+      // wait for byte to be ready
+      while (!(AUX[AUX_MU_LSR_REG] & (1 << 0)))
+        ;
+      csize[j] = AUX[AUX_MU_IO_REG] & 0xff;
+    }
+    GPIO[GPCLR1] = 1 << LED;
+    for (int j = 0; j < size; j++) {
+      // wait for byte to be ready
+      while (!(AUX[AUX_MU_LSR_REG] & (1 << 0)))
+        ;
+      sum += AUX[AUX_MU_IO_REG] & 0xff;
+    }
+    // write sum back up pipe
+    for (int j = 0; j < 4; j++) {
+      // wait for transmit
       while (!(AUX[AUX_MU_LSR_REG] & (1 << 5)))
         ;
-      AUX[AUX_MU_IO_REG] = message[j];
+      AUX[AUX_MU_IO_REG] = csum[j];
     }
-    GPIO[GPSET1] = 1 << LED;
-    for (int j = 0; j < 0x100000; j++)
-      ;
-    GPIO[GPCLR1] = 1 << LED;
-    for (int j = 0; j < 0x100000; j++)
-      ;
   }
 
   return 0;
