@@ -60,9 +60,18 @@ int main(void) {
   GPIO[GPFSEL4] = gpio_reg;
 
   char message[1024];
+  int size = 0;
+
+  const char hello[] = "Hello, world!\r\n";
+  size = 15;
+
+  for (int j = 0; j < size; j++) {
+    while (!(AUX[AUX_MU_LSR_REG] & (1 << 5)))
+      ;
+    AUX[AUX_MU_IO_REG] = hello[j];
+  }
 
   while (1) {
-    unsigned int size = 0;
 
     GPIO[GPSET1] = 1 << LED;
     for (;;) {
