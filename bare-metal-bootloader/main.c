@@ -59,33 +59,28 @@ int main(void) {
   gpio_reg |= 1 << 21;
   GPIO[GPFSEL4] = gpio_reg;
 
+  char message[1024];
+
   while (1) {
-    // read 4 bytes
-    // 15 == strlen(message)
-    unsigned int size = 0, sum = 0;
-    unsigned char * csize = (unsigned char *) &size;
-    unsigned char * csum = (unsigned char *) &sum;
+    unsigned int size = 0;
 
     GPIO[GPSET1] = 1 << LED;
-    for (int j = 0; j < 4; j++) {
-      // wait for byte to be ready
+    for (;;) {
       while (!(AUX[AUX_MU_LSR_REG] & (1 << 0)))
         ;
-      csize[j] = AUX[AUX_MU_IO_REG] & 0xff;
+      char l = AUX[AUX_MU_IO_REG] & 0xff;
+      if (l == '\n') {
+        size++;
+        break;
+      }
+      message[size] = l;
+      size++;
     }
     GPIO[GPCLR1] = 1 << LED;
     for (int j = 0; j < size; j++) {
-      // wait for byte to be ready
-      while (!(AUX[AUX_MU_LSR_REG] & (1 << 0)))
-        ;
-      sum += AUX[AUX_MU_IO_REG] & 0xff;
-    }
-    // write sum back up pipe
-    for (int j = 0; j < 4; j++) {
-      // wait for transmit
       while (!(AUX[AUX_MU_LSR_REG] & (1 << 5)))
         ;
-      AUX[AUX_MU_IO_REG] = csum[j];
+      AUX[AUX_MU_IO_REG] = message[j];
     }
   }
 
