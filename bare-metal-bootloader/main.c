@@ -72,18 +72,18 @@ int main(void) {
   }
 
   while (1) {
+    size = 0;
 
     GPIO[GPSET1] = 1 << LED;
     for (;;) {
       while (!(AUX[AUX_MU_LSR_REG] & (1 << 0)))
         ;
       char l = AUX[AUX_MU_IO_REG] & 0xff;
-      if (l == '\n') {
-        size++;
-        break;
-      }
       message[size] = l;
       size++;
+      if (l == '\n') {
+        break;
+      }
     }
     GPIO[GPCLR1] = 1 << LED;
     for (int j = 0; j < size; j++) {
