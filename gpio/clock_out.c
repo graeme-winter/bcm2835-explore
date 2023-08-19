@@ -43,8 +43,8 @@ int main() {
   setup();
   set_mode(4, GPIO_ALT0);
   uint32_t pass = 0x5a << 24;
-  uint32_t div = 1920 << 12;
-  mem[0x70 / 4] = 0;
+  uint32_t div = 192 << 12;
+  mem[0x70 / 4] = pass | 0x20;
   mem[0x74 / 4] = pass | div;
   mem[0x70 / 4] = pass | 0x10 | 0x1;
   return 0;
