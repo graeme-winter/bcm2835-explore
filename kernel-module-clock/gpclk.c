@@ -47,17 +47,17 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len, loff_t *of
   // should probably handle failure to write here
   copy_to_user(buf, &clkdiv, sizeof(uint32_t));
 
-  return 0;
+  return sizeof(uint32_t);
 }
 
 static ssize_t clk_write(struct file *f, const char __user *buf, size_t len, loff_t *off) {
   uint8_t clkbuf[10] = {0};
 
   // should have error handling here
-  copy_from_user(clkbuf, buf, len);
+  copy_from_user(clkbuf, buf, sizeof(uint32_t));
   *((uint32_t *)GPCLK0_DIV) = *(uint32_t *)clkbuf;
 
-  return len;
+  return sizeof(uint32_t);
 }
 
 static int __init clk_driver_init(void) {
