@@ -9,7 +9,7 @@
 #include <linux/module.h>
 #include <linux/uaccess.h>
 
-#define GPCLK0_DIV 0x7e101074
+#define GPCLK0_DIV 0x20101074
 
 dev_t dev = 0;
 
