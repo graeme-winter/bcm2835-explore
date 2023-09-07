@@ -101,7 +101,7 @@ static void __exit clk_driver_exit(void) {
 module_init(clk_driver_init);
 module_exit(clk_driver_exit);
 
-MODULE_LICENSE("BSD");
+MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Graeme Winter <graeme.winter@gmail.com>");
 MODULE_DESCRIPTION("Simple wrapper around BCM2835 GPCLK");
 MODULE_VERSION("0.1");
