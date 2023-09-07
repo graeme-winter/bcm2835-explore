@@ -9,6 +9,8 @@
 #include <linux/module.h>
 #include <linux/uaccess.h>
 
+#define GPCLK0_DIV 0x7e101074
+
 dev_t dev = 0;
 
 static struct class *clk_class;
@@ -40,7 +42,7 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len, loff_t *of
   uint32_t clkdiv = 0;
 
   // copy out the register value
-  clkdiv = *((uint32_t *)0x20101074);
+  clkdiv = *((uint32_t *)GPCLK0_DIV);
 
   // should probably handle failure to write here
   copy_to_user(buf, &clkdiv, sizeof(uint32_t));
@@ -53,7 +55,7 @@ static ssize_t clk_write(struct file *f, const char __user *buf, size_t len, lof
 
   // should have error handling here
   copy_from_user(clkbuf, buf, len);
-  *((uint32_t *)0x20101074) = *(uint32_t *)clkbuf;
+  *((uint32_t *)GPCLK0_DIV) = *(uint32_t *)clkbuf;
 
   return len;
 }
