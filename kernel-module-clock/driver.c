@@ -3,28 +3,26 @@
 #include <linux/device.h>
 #include <linux/err.h>
 #include <linux/fs.h>
-#include <linux/gpio.h>
 #include <linux/init.h>
 #include <linux/kdev_t.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/uaccess.h>
 
-#define GPIO_21 (21)
-
 dev_t dev = 0;
+
 static struct class *dev_class;
 static struct cdev clk_cdev;
 
+// module load and unload functions
 static int __init clk_driver_init(void);
 static void __exit clk_driver_exit(void);
 
-static int clk_open(struct inode *inode, struct file *file);
-static int clk_release(struct inode *inode, struct file *file);
-static ssize_t clk_read(struct file *filp, char __user *buf, size_t len,
-                        loff_t *off);
-static ssize_t clk_write(struct file *filp, const char *buf, size_t len,
-                         loff_t *off);
+// open, close, read, write
+static int clk_open(struct inode *i, struct file *f);
+static int clk_release(struct inode *i, struct file *f);
+static ssize_t clk_read(struct file *f, char __user *buf, size_t len, loff_t *off);
+static ssize_t clk_write(struct file *f, const char *buf, size_t len, loff_t *off);
 
 static struct file_operations fops = {
     .owner = THIS_MODULE,
@@ -34,42 +32,34 @@ static struct file_operations fops = {
     .release = clk_release,
 };
 
-static int clk_open(struct inode *inode, struct file *file) { return 0; }
+// open and close are no-ops - we don't need to do anything in particular
+static int clk_open(struct inode *i, struct file *f) { return 0; }
+static int clk_release(struct inode *i, struct file *f) { return 0; }
 
-static int clk_release(struct inode *inode, struct file *file) { return 0; }
+static ssize_t clk_read(struct file *f, char __user *buf, size_t len, loff_t *off) {
+  uint32_t clkdiv = 0;
 
-static ssize_t clk_read(struct file *filp, char __user *buf, size_t len,
-                        loff_t *off) {
-  uint8_t gpio_state = 0;
+  // copy out the register value
+  clkdiv = *((uint32_t *)0x7e101074);
 
-  gpio_state = gpio_get_value(GPIO_21);
-
-  len = 1;
-  if (copy_to_user(buf, &gpio_state, len) > 0) {
-  }
+  // should probably handle failure to write here
+  copy_to_user(buf, &clkdiv, sizeof(uint32_t));
 
   return 0;
 }
 
-static ssize_t clk_write(struct file *filp, const char __user *buf, size_t len,
-                         loff_t *off) {
-  uint8_t rec_buf[10] = {0};
+static ssize_t clk_write(struct file *f, const char __user *buf, size_t len, loff_t *off) {
+  uint8_t clkbuf[10] = {0};
 
-  if (copy_from_user(rec_buf, buf, len) > 0) {
-    // act on this error
-  }
-
-  if (rec_buf[0] == '1') {
-    gpio_set_value(GPIO_21, 1);
-  } else if (rec_buf[0] == '0') {
-    gpio_set_value(GPIO_21, 0);
-  }
+  // should have error handling here
+  copy_from_user(clkbuf, buf, len);
+  *((uint32_t *)0x7e101074) = *(uint32_t *)clkbuf;
 
   return len;
 }
 
 static int __init clk_driver_init(void) {
-  if ((alloc_chrdev_region(&dev, 0, 1, "clk_Dev")) < 0) {
+  if ((alloc_chrdev_region(&dev, 0, 1, "gpclk")) < 0) {
     goto r_unreg;
   }
 
@@ -87,22 +77,8 @@ static int __init clk_driver_init(void) {
     goto r_device;
   }
 
-  if (gpio_is_valid(GPIO_21) == false) {
-    goto r_device;
-  }
-
-  if (gpio_request(GPIO_21, "GPIO_21") < 0) {
-    goto r_gpio;
-  }
-
-  gpio_direction_output(GPIO_21, 0);
-
-  gpio_export(GPIO_21, false);
-
   return 0;
 
-r_gpio:
-  gpio_free(GPIO_21);
 r_device:
   device_destroy(dev_class, dev);
 r_class:
@@ -115,12 +91,7 @@ r_unreg:
   return -1;
 }
 
-/*
-** Module exit function
-*/
 static void __exit clk_driver_exit(void) {
-  gpio_unexport(GPIO_21);
-  gpio_free(GPIO_21);
   device_destroy(dev_class, dev);
   class_destroy(dev_class);
   cdev_del(&clk_cdev);
