@@ -11,7 +11,7 @@
 
 dev_t dev = 0;
 
-static struct class *dev_class;
+static struct class *clk_class;
 static struct cdev clk_cdev;
 
 // module load and unload functions
@@ -69,20 +69,20 @@ static int __init clk_driver_init(void) {
     goto r_del;
   }
 
-  if (IS_ERR(dev_class = class_create(THIS_MODULE, "clk_class"))) {
+  if (IS_ERR(clk_class = class_create(THIS_MODULE, "gpclk"))) {
     goto r_class;
   }
 
-  if (IS_ERR(device_create(dev_class, NULL, dev, NULL, "clk_device"))) {
+  if (IS_ERR(device_create(clk_class, NULL, dev, NULL, "gpclk0"))) {
     goto r_device;
   }
 
   return 0;
 
 r_device:
-  device_destroy(dev_class, dev);
+  device_destroy(clk_class, dev);
 r_class:
-  class_destroy(dev_class);
+  class_destroy(clk_class);
 r_del:
   cdev_del(&clk_cdev);
 r_unreg:
@@ -92,8 +92,8 @@ r_unreg:
 }
 
 static void __exit clk_driver_exit(void) {
-  device_destroy(dev_class, dev);
-  class_destroy(dev_class);
+  device_destroy(clk_class, dev);
+  class_destroy(clk_class);
   cdev_del(&clk_cdev);
   unregister_chrdev_region(dev, 1);
 }
