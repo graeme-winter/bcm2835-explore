@@ -34,30 +34,36 @@ static struct file_operations fops = {
     .release = clk_release,
 };
 
+// local memory
+char words[128] = "Hello, World!";
+
 // open and close are no-ops - we don't need to do anything in particular
-static int clk_open(struct inode *i, struct file *f) { return 0; }
-static int clk_release(struct inode *i, struct file *f) { return 0; }
+static int clk_open(struct inode *i, struct file *f) {
+  printk("GPCLK open\n");
+  return 0;
+}
+
+static int clk_release(struct inode *i, struct file *f) {
+  printk("GPCLK close\n");
+  return 0;
+}
 
 static ssize_t clk_read(struct file *f, char __user *buf, size_t len, loff_t *off) {
-  uint32_t clkdiv = 0;
+  printk("GPCLK read\n");
+  len = 14;
+  
+  copy_to_user(buf, words, len);
 
-  // copy out the register value
-  clkdiv = *((uint32_t *)GPCLK0_DIV);
-
-  // should probably handle failure to write here
-  copy_to_user(buf, &clkdiv, sizeof(uint32_t));
-
-  return sizeof(uint32_t);
+  return 0;
 }
 
 static ssize_t clk_write(struct file *f, const char __user *buf, size_t len, loff_t *off) {
-  uint8_t clkbuf[10] = {0};
 
-  // should have error handling here
-  copy_from_user(clkbuf, buf, sizeof(uint32_t));
-  *((uint32_t *)GPCLK0_DIV) = *(uint32_t *)clkbuf;
+  printk("GPCLK write\n");
+  copy_from_user(words, buf, len);
+  words[len] = 0;
 
-  return sizeof(uint32_t);
+  return 0;
 }
 
 static int __init clk_driver_init(void) {
