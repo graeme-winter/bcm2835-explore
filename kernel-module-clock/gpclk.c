@@ -69,6 +69,8 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
     remains = len;
   }
 
+  *off += remains;
+  
   copy_to_user(buf, msg, remains);
 
   return remains;
