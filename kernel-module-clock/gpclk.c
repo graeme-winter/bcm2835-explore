@@ -23,8 +23,10 @@ static void __exit clk_driver_exit(void);
 // open, close, read, write
 static int clk_open(struct inode *i, struct file *f);
 static int clk_release(struct inode *i, struct file *f);
-static ssize_t clk_read(struct file *f, char __user *buf, size_t len, loff_t *off);
-static ssize_t clk_write(struct file *f, const char *buf, size_t len, loff_t *off);
+static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
+                        loff_t *off);
+static ssize_t clk_write(struct file *f, const char *buf, size_t len,
+                         loff_t *off);
 
 static struct file_operations fops = {
     .owner = THIS_MODULE,
@@ -35,7 +37,8 @@ static struct file_operations fops = {
 };
 
 // local memory
-char words[128] = "Hello, World!";
+char words[128] = "Hello, World! 0123456789abcdef";
+int length = 30;
 
 // open and close are no-ops - we don't need to do anything in particular
 static int clk_open(struct inode *i, struct file *f) {
@@ -48,16 +51,31 @@ static int clk_release(struct inode *i, struct file *f) {
   return 0;
 }
 
-static ssize_t clk_read(struct file *f, char __user *buf, size_t len, loff_t *off) {
+static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
+                        loff_t *off) {
   printk("GPCLK read\n");
-  len = 14;
-  
-  copy_to_user(buf, words, len);
 
-  return 0;
+  char *msg = words;
+
+  if (off > length) {
+    *off = 0;
+    return 0;
+  }
+
+  msg += *off;
+
+  int remains = length - *off;
+  if (remains > len) {
+    remains = len;
+  }
+
+  copy_to_user(buf, msg, remains);
+
+  return remains;
 }
 
-static ssize_t clk_write(struct file *f, const char __user *buf, size_t len, loff_t *off) {
+static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
+                         loff_t *off) {
 
   printk("GPCLK write\n");
   copy_from_user(words, buf, len);
