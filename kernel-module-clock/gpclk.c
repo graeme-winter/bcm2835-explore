@@ -86,13 +86,12 @@ static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
 
   int error = 0;
   printk("kB write\n");
-  if ((size + len) > MAXSIZE) {
-    len = MAXSIZE - size;
+  if (len > MAXSIZE) {
+    len = MAXSIZE;
   }
-  msg = words + size;
-  error = copy_from_user(msg, buf, len);
-  *off += len;
-  size += len;
+  error = copy_from_user(words, buf, len);
+  *off = len;
+  size = len;
   return len;
 }
 
