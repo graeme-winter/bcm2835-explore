@@ -58,6 +58,7 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
   remains = 1024 - *off;
 
   if (remains <= 0) {
+    *off = 0;
     return 0;
   }
 
@@ -65,9 +66,11 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
 
   if (remains > len) {
     error = copy_to_user(buf, msg, len);
+    *off += len;
     return len;
   } else {
     error = copy_to_user(buf, msg, remains);
+    *off += remains;
     return remains;
   }
 
