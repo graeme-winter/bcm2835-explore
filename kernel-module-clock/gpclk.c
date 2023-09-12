@@ -82,8 +82,6 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
 
 static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
                          loff_t *off) {
-  char *msg;
-
   int error = 0;
   printk("kB write\n");
   if (len > MAXSIZE) {
@@ -112,7 +110,7 @@ static int __init clk_driver_init(void) {
     goto r_class;
   }
 
-  if (IS_ERR(device_create(clk_class, NULL, dev, NULL, "kB0"))) {
+  if (IS_ERR(device_create(clk_class, NULL, dev, NULL, "kB"))) {
     goto r_device;
   }
 
