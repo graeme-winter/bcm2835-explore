@@ -35,68 +35,70 @@ static struct file_operations fops = {
 };
 
 // local memory
-#define MAXSIZE 1024
-static char words[MAXSIZE] = {0};
-static int size = 0;
+int clkdiv = 0;
+int clksrc = 0;
 
 // open and close are no-ops - we don't need to do anything in particular
 static int clk_open(struct inode *i, struct file *f) {
-  printk("kB open\n");
+  printk("gpclk open\n");
   return 0;
 }
 
 static int clk_release(struct inode *i, struct file *f) {
-  printk("kB close\n");
+  printk("gpclk close\n");
   return 0;
 }
 
 static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
                         loff_t *off) {
-  int remains, error;
-  char *msg;
+  char msg[80];
+  int div, n, error;
 
-  printk("kB read\n");
+  printk("gpclk read\n");
 
-  remains = size - *off;
-
-  if (remains <= 0) {
+  if (*off) {
     *off = 0;
     return 0;
   }
 
-  msg = words + *off;
+  div = ((*(unsigned int *)(0x20101074)) >> 12) & 0xfff;
+  sprintf(msg, "%d", div);
+  n = strlen(msg);
 
-  if (remains > len) {
-    error = copy_to_user(buf, msg, len);
-    *off += len;
-    return len;
-  } else {
-    error = copy_to_user(buf, msg, remains);
-    *off += remains;
-    return remains;
-  }
+  // if n > len error - this is very unlikely
 
-  // cannot reach here anyway
-  return 0;
+  error = copy_to_user(buf, msg, n);
+
+  // if error; we have an error
+
+  *off += n;
+  return n;
 }
 
 static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
                          loff_t *off) {
+  char msg[80];
   int error = 0;
-  printk("kB write\n");
-  if (len > MAXSIZE) {
-    len = MAXSIZE;
+
+  printk("gpclk write\n");
+
+  if (len > 80) {
+    len = 79;
   }
-  error = copy_from_user(words, buf, len);
+
+  error = copy_from_user(msg, buf, len);
+
+  msg[len] = 0;
+
+  // FIXME do something with this message once I know the device address
+
   *off = len;
-  size = len;
   return len;
 }
 
 static int __init clk_driver_init(void) {
-  int j;
 
-  if ((alloc_chrdev_region(&dev, 0, 1, "kB")) < 0) {
+  if ((alloc_chrdev_region(&dev, 0, 1, "gpclk")) < 0) {
     goto r_unreg;
   }
 
@@ -106,18 +108,13 @@ static int __init clk_driver_init(void) {
     goto r_del;
   }
 
-  if (IS_ERR(clk_class = class_create(THIS_MODULE, "kB"))) {
+  if (IS_ERR(clk_class = class_create(THIS_MODULE, "gpclk"))) {
     goto r_class;
   }
 
-  if (IS_ERR(device_create(clk_class, NULL, dev, NULL, "kB"))) {
+  if (IS_ERR(device_create(clk_class, NULL, dev, NULL, "gpclk"))) {
     goto r_device;
   }
-
-  // initialise memory space
-  for (j = 0; j < MAXSIZE; j++)
-    words[j] = 0x41 + (j % 26);
-  size = MAXSIZE;
 
   return 0;
 
