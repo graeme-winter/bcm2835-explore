@@ -50,16 +50,18 @@ static int clk_release(struct inode *i, struct file *f) {
 
 static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
                         loff_t *off) {
+  int remains, error;
+  char *msg;
+
   printk("kB read\n");
 
-  int remains = 1024 - *off;
-  int error = 0;
+  remains = 1024 - *off;
 
-  if (if remains <= 0) {
+  if (remains <= 0) {
     return 0;
   }
 
-  char *msg = words + *off;
+  msg = words + *off;
 
   if (remains > len) {
     error = copy_to_user(buf, msg, len);
