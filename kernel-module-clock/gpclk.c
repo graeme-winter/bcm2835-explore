@@ -35,7 +35,7 @@ static struct file_operations fops = {
 };
 
 // local memory
-#define MAXSIZE 1024;
+#define MAXSIZE 1024
 static char words[MAXSIZE] = {0};
 static int size = 0;
 
@@ -115,8 +115,9 @@ static int __init clk_driver_init(void) {
   }
 
   // initialise memory space
-  for (j = 0; j < 1024; j++)
+  for (j = 0; j < MAXSIZE; j++)
     words[j] = 0x41 + (j % 26);
+  size = MAXSIZE;
 
   return 0;
 
