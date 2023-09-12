@@ -89,6 +89,7 @@ static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
   }
   error = copy_from_user(words, buf, len);
   *off += len;
+  size = len;
   return 0;
 }
 
