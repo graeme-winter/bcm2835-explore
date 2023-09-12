@@ -53,6 +53,7 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
   printk("kB read\n");
 
   int remains = 1024 - *off;
+  int error = 0;
 
   if (if remains <= 0) {
     return 0;
@@ -61,10 +62,10 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
   char *msg = words + *off;
 
   if (remains > len) {
-    copy_to_user(buf, msg, len);
+    error = copy_to_user(buf, msg, len);
     return len;
   } else {
-    copy_to_user(buf, msg, remains);
+    error = copy_to_user(buf, msg, remains);
     return remains;
   }
 
@@ -74,15 +75,17 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
 
 static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
                          loff_t *off) {
-
+  int error = 0;
   printk("kB write\n");
-  copy_from_user(words, buf, len);
+  error = copy_from_user(words, buf, len);
   words[len] = 0;
 
   return 0;
 }
 
 static int __init clk_driver_init(void) {
+  int j;
+
   if ((alloc_chrdev_region(&dev, 0, 1, "kB")) < 0) {
     goto r_unreg;
   }
@@ -102,7 +105,8 @@ static int __init clk_driver_init(void) {
   }
 
   // initialise memory space
-  for (int j = 0; j < 1024; j++) words[j] = j % 0x100;
+  for (j = 0; j < 1024; j++)
+    words[j] = 0x41 + (j % 26);
 
   return 0;
 
