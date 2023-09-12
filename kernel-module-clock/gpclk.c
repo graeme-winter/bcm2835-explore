@@ -35,7 +35,9 @@ static struct file_operations fops = {
 };
 
 // local memory
-char words[1024] = {0};
+#define MAXSIZE 1024;
+static char words[MAXSIZE] = {0};
+static int size = 0;
 
 // open and close are no-ops - we don't need to do anything in particular
 static int clk_open(struct inode *i, struct file *f) {
@@ -55,7 +57,7 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
 
   printk("kB read\n");
 
-  remains = 1024 - *off;
+  remains = size - *off;
 
   if (remains <= 0) {
     *off = 0;
@@ -82,9 +84,11 @@ static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
                          loff_t *off) {
   int error = 0;
   printk("kB write\n");
+  if (len > MAXSIZE) {
+    len = MAXSIZE;
+  }
   error = copy_from_user(words, buf, len);
-  words[len] = 0;
-
+  *off += len;
   return 0;
 }
 
