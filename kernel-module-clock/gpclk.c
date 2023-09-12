@@ -9,8 +9,6 @@
 #include <linux/module.h>
 #include <linux/uaccess.h>
 
-#define GPCLK0_DIV 0x20101074
-
 dev_t dev = 0;
 
 static struct class *clk_class;
@@ -37,49 +35,47 @@ static struct file_operations fops = {
 };
 
 // local memory
-char words[128] = "Hello, World! 0123456789abcdef";
-int length = 30;
+char words[1024] = {0};
 
 // open and close are no-ops - we don't need to do anything in particular
 static int clk_open(struct inode *i, struct file *f) {
-  printk("GPCLK open\n");
+  printk("kB open\n");
   return 0;
 }
 
 static int clk_release(struct inode *i, struct file *f) {
-  printk("GPCLK close\n");
+  printk("kB close\n");
   return 0;
 }
 
 static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
                         loff_t *off) {
-  printk("GPCLK read\n");
+  printk("kB read\n");
 
-  char *msg = words;
+  int remains = 1024 - *off;
 
-  if (off > length) {
-    *off = 0;
+  if (if remains <= 0) {
     return 0;
   }
 
-  msg += *off;
+  char *msg = words + *off;
 
-  int remains = length - *off;
   if (remains > len) {
-    remains = len;
+    copy_to_user(buf, msg, len);
+    return len;
+  } else {
+    copy_to_user(buf, msg, remains);
+    return remains;
   }
 
-  *off += remains;
-  
-  copy_to_user(buf, msg, remains);
-
-  return remains;
+  // cannot reach here anyway
+  return 0;
 }
 
 static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
                          loff_t *off) {
 
-  printk("GPCLK write\n");
+  printk("kB write\n");
   copy_from_user(words, buf, len);
   words[len] = 0;
 
@@ -87,7 +83,7 @@ static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
 }
 
 static int __init clk_driver_init(void) {
-  if ((alloc_chrdev_region(&dev, 0, 1, "gpclk")) < 0) {
+  if ((alloc_chrdev_region(&dev, 0, 1, "kB")) < 0) {
     goto r_unreg;
   }
 
@@ -97,13 +93,16 @@ static int __init clk_driver_init(void) {
     goto r_del;
   }
 
-  if (IS_ERR(clk_class = class_create(THIS_MODULE, "gpclk"))) {
+  if (IS_ERR(clk_class = class_create(THIS_MODULE, "kB"))) {
     goto r_class;
   }
 
-  if (IS_ERR(device_create(clk_class, NULL, dev, NULL, "gpclk0"))) {
+  if (IS_ERR(device_create(clk_class, NULL, dev, NULL, "kB0"))) {
     goto r_device;
   }
+
+  // initialise memory space
+  for (int j = 0; j < 1024; j++) words[j] = j % 0x100;
 
   return 0;
 
