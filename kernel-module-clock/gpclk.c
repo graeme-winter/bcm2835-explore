@@ -1,3 +1,4 @@
+#include <asm/io.h>
 #include <linux/cdev.h>
 #include <linux/delay.h>
 #include <linux/device.h>
