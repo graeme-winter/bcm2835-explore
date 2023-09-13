@@ -9,6 +9,8 @@
 #include <linux/module.h>
 #include <linux/uaccess.h>
 
+#define GPCLK_ADDR 0x20101074
+
 dev_t dev = 0;
 
 static struct class *clk_class;
@@ -26,6 +28,8 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
 static ssize_t clk_write(struct file *f, const char *buf, size_t len,
                          loff_t *off);
 
+static void *clk_addr;
+
 static struct file_operations fops = {
     .owner = THIS_MODULE,
     .read = clk_read,
@@ -41,11 +45,13 @@ int clksrc = 0;
 // open and close are no-ops - we don't need to do anything in particular
 static int clk_open(struct inode *i, struct file *f) {
   printk("gpclk open\n");
+  clk_addr = ioremap(GPCLK_ADDR, sizeof(unsigned int));
   return 0;
 }
 
 static int clk_release(struct inode *i, struct file *f) {
   printk("gpclk close\n");
+  iounmap(clk_addr);
   return 0;
 }
 
@@ -61,7 +67,7 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
     return 0;
   }
 
-  div = ((*(unsigned int *)(0x20101074)) >> 12) & 0xfff;
+  div = (readl(clk_addr) >> 12) & 0xfff;
   sprintf(msg, "%d", div);
   n = strlen(msg);
 
