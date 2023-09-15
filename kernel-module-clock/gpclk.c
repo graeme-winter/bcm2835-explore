@@ -10,7 +10,7 @@
 #include <linux/module.h>
 #include <linux/uaccess.h>
 
-#define GPCLK_ADDR 0x20101074
+#define GPCLK_ADDR 0x20101070
 
 dev_t dev = 0;
 
@@ -43,10 +43,10 @@ static struct file_operations fops = {
 int clkdiv = 0;
 int clksrc = 0;
 
-// open and close are no-ops - we don't need to do anything in particular
+// open and close are set up to map / free a region of the pi address space
 static int clk_open(struct inode *i, struct file *f) {
   printk("gpclk open\n");
-  clk_addr = ioremap(GPCLK_ADDR, sizeof(unsigned int));
+  clk_addr = ioremap(GPCLK_ADDR, 2 * sizeof(unsigned int));
   return 0;
 }
 
@@ -63,29 +63,33 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
 
   printk("gpclk read\n");
 
+  // generate EOF for graceful reading
   if (*off) {
     *off = 0;
     return 0;
   }
 
-  div = (readl(clk_addr) >> 12) & 0xfff;
+  // write as a string the current value
+  div = (readl(&clk_addr[1]) >> 12) & 0xfff;
   sprintf(msg, "%d", div);
   n = strlen(msg);
 
-  // if n > len error - this is very unlikely
-
   error = copy_to_user(buf, msg, n);
 
-  // if error; we have an error
+  printk("gpclk read status: %d\n", error);
 
+  // transmit that data has been written
   *off += n;
+
   return n;
 }
 
 static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
                          loff_t *off) {
   char msg[80];
-  int error = 0;
+  int state, pass, div, error = 0;
+
+  pass = 0x5a << 24;
 
   printk("gpclk write\n");
 
@@ -95,9 +99,19 @@ static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
 
   error = copy_from_user(msg, buf, len);
 
+  printk("gpclk write status: %d\n", error);
+
   msg[len] = 0;
 
-  // FIXME do something with this message once I know the device address
+  sscanf(msg, "%d", &div);
+
+  // check is < 4096 etc.
+
+  // disable, update, reenable
+  state = readl(&clk_addr[0]);
+  writel(0, &clk_addr[0]);
+  writel(pass | (div << 12), &clk_addr[1]);
+  writel(pass | state, &clk_addr[0]);
 
   *off = len;
   return len;
