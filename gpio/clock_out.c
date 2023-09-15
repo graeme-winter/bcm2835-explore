@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -39,13 +40,13 @@ void set_mode(int gpio, int mode) {
   reg[off] = (reg[off] & ~(0b111 << shift)) | (mode << shift);
 }
 
-int main() {
+int main(int argc, char ** argv) {
   setup();
   set_mode(4, GPIO_ALT0);
   uint32_t pass = 0x5a << 24;
-  uint32_t div = 1920 << 12;
-  mem[0x70 / 4] = 0;
+  uint32_t div = atoi(argv[1]) << 12;
+  mem[0x70 / 4] = pass | (0x1 << 5);
   mem[0x74 / 4] = pass | div;
-  mem[0x70 / 4] = pass | 0x10 | 0x1;
+  mem[0x70 / 4] = pass | 0x10 | 0x6;
   return 0;
 }
