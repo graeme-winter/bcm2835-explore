@@ -70,7 +70,7 @@ static ssize_t clk_read(struct file *f, char __user *buf, size_t len,
   }
 
   // write as a string the current value
-  div = (readl(&clk_addr[1]) >> 12) & 0xfff;
+  div = (readl(clk_addr + 4) >> 12) & 0xfff;
   sprintf(msg, "%d", div);
   n = strlen(msg);
 
@@ -108,10 +108,10 @@ static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
   // check is < 4096 etc.
 
   // disable, update, reenable
-  state = readl(&clk_addr[0]);
-  writel(0, &clk_addr[0]);
-  writel(pass | (div << 12), &clk_addr[1]);
-  writel(pass | state, &clk_addr[0]);
+  state = readl(clk_addr);
+  writel(0, clk_addr);
+  writel(pass | (div << 12), clk_addr + 4);
+  writel(pass | state, clk_addr);
 
   *off = len;
   return len;
