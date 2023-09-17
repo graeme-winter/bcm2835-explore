@@ -1,3 +1,3 @@
-# Bare Metal Blink
+# Bare Metal Clock
 
-Exactly what it says on the tin: bare metal π0 program to make the LED on GPIO47 blink.
+Set up GP0 clock to GPIO, configured from main system clock PLLC.
