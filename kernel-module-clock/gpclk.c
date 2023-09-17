@@ -88,6 +88,7 @@ static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
                          loff_t *off) {
   char msg[80];
   int state, pass, div, error = 0;
+  int kill = 0x1 << 5;
 
   pass = 0x5a << 24;
 
@@ -99,17 +100,15 @@ static ssize_t clk_write(struct file *f, const char __user *buf, size_t len,
 
   error = copy_from_user(msg, buf, len);
 
-  printk("gpclk write status: %d\n", error);
-
   msg[len] = 0;
 
   sscanf(msg, "%d", &div);
 
-  // check is < 4096 etc.
+  printk("gpclk write status: %d value: %d\n", error, div);
 
   // disable, update, reenable
   state = readl(clk_addr);
-  writel(0, clk_addr);
+  writel(pass | kill, clk_addr);
   writel(pass | (div << 12), clk_addr + 4);
   writel(pass | state, clk_addr);
 
